@@ -1,0 +1,58 @@
+{% extends 'pages/base.html' %}
+{% load static %}
+
+{% block title_extra %} — Sign In{% endblock %}
+
+{% block auth_content %}
+<div class="auth-shell">
+  <!-- Visual Side -->
+  <div class="auth-visual">
+    <div class="auth-visual-pattern"></div>
+    <div class="auth-visual-content">
+      <div class="auth-visual-logo">N</div>
+      <h1 class="auth-visual-heading">Your cloud,<br>your control.</h1>
+      <p class="auth-visual-sub">Secure, fast, and beautifully organized. Nimbus keeps your files where you need them.</p>
+    </div>
+  </div>
+
+  <!-- Form Side -->
+  <div class="auth-form-side">
+    <div class="auth-form-wrap">
+      <h3 class="auth-form-title">Welcome back</h3>
+      <p class="auth-form-desc">Sign in to access your files and storage.</p>
+
+      <form method="post" class="auth-form">
+        {% csrf_token %}
+
+        {% if form.errors %}
+        <ul class="form-error-list">
+          {% for field in form %}
+          {% for error in field.errors %}
+          <li>{{ error }}</li>
+          {% endfor %}
+          {% endfor %}
+          {% for error in form.non_field_errors %}
+          <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+
+        <div class="form-group">
+          <label for="id_username">Username</label>
+          <input type="text" name="username" id="id_username" class="form-input {% if form.username.errors %}error{% endif %}" placeholder="Enter your username" autofocus value="{{ form.username.value|default:'' }}">
+        </div>
+
+        <div class="form-group">
+          <label for="id_password">Password</label>
+          <input type="password" name="password" id="id_password" class="form-input {% if form.password.errors %}error{% endif %}" placeholder="Enter your password">
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full">Sign In</button>
+      </form>
+
+      <div class="auth-divider">Don't have an account?</div>
+      <a href="{% url 'register' %}" class="btn btn-ghost btn-full">Create Account</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
