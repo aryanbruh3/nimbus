@@ -208,7 +208,6 @@ def star_file_view(request, file_id):
     cf.save()
     return JsonResponse({'success': True, 'starred': cf.is_starred})
 
-
 @login_required
 def file_download_view(request, file_id):
     """Download a file — always forces browser to save, never preview."""
@@ -219,14 +218,15 @@ def file_download_view(request, file_id):
     # Cloudinary — fetch the file server-side and serve as download
     if getattr(settings, 'USE_CLOUDINARY', False):
         import requests as req
+        from django.http import StreamingHttpResponse
         resp = req.get(cf.file.url, stream=True)
         if resp.status_code != 200:
             raise Http404("File not found on cloud")
-        response = FileResponse(
+        response = StreamingHttpResponse(
             resp.iter_content(chunk_size=8192),
-            as_attachment=True,
-            filename=cf.name,
+            content_type='application/octet-stream',
         )
+        response['Content-Disposition'] = f'attachment; filename="{cf.name}"'
         return response
 
     # Local filesystem — serve via FileResponse
