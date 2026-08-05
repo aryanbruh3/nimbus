@@ -112,7 +112,7 @@ STORAGES = {
     },
     'default': {
         'BACKEND': (
-            'cloudinary_storage.storage.MediaCloudinaryStorage'
+            'cloudinary_storage.storage.RawMediaCloudinaryStorage'
             if USE_CLOUDINARY
             else 'django.core.files.storage.FileSystemStorage'
         ),
