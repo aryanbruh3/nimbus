@@ -11,7 +11,7 @@ from .models import CloudFile, StorageUsage
 # Change these to set your caps
 MAX_USERS = 500                                  # Max accounts that can register
 MAX_FILE_SIZE = 100 * 1024 * 1024                # 100 MB max per single file upload
-DEFAULT_STORAGE_BYTES = 1 * 1024 * 1024 * 1024 * 1024   # 1 TB quota per user
+DEFAULT_STORAGE_BYTES = 1 * 1024 * 1024 * 1024   # 1 GB quota per user
 
 
 def register_view(request):

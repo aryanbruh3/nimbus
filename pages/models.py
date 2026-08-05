@@ -60,7 +60,7 @@ class CloudFile(models.Model):
 
 class StorageUsage(models.Model):
     owner = models.OneToOneField(User, on_delete=models.CASCADE, related_name='storage_usage')
-    total_bytes = models.BigIntegerField(default=1 * 1024 * 1024 * 1024 * 1024)  # 1 TB default
+    total_bytes = models.BigIntegerField(default=1 * 1024 * 1024 * 1024)  # 1 GB default
     used_bytes = models.BigIntegerField(default=0)
 
     def __str__(self):
