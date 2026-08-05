@@ -211,14 +211,23 @@ def star_file_view(request, file_id):
 
 @login_required
 def file_download_view(request, file_id):
-    """Download a file. Cloudinary redirects to URL, local serves via FileResponse."""
+    """Download a file — always forces browser to save, never preview."""
     cf = get_object_or_404(CloudFile, id=file_id, owner=request.user)
     if not cf.file:
         raise Http404("File not found")
 
-    # Cloudinary — redirect to the file URL directly
+    # Cloudinary — fetch the file server-side and serve as download
     if getattr(settings, 'USE_CLOUDINARY', False):
-        return HttpResponseRedirect(cf.file.url)
+        import requests as req
+        resp = req.get(cf.file.url, stream=True)
+        if resp.status_code != 200:
+            raise Http404("File not found on cloud")
+        response = FileResponse(
+            resp.iter_content(chunk_size=8192),
+            as_attachment=True,
+            filename=cf.name,
+        )
+        return response
 
     # Local filesystem — serve via FileResponse
     try:
