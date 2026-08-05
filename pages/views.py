@@ -216,15 +216,12 @@ def file_download_view(request, file_id):
     if not cf.file:
         raise Http404("File not found")
 
-    # Cloudinary — redirect to the cloud URL with download flag
+    # Cloudinary — redirect to cloud URL (fl_attachment forces browser to download)
     if getattr(settings, 'USE_CLOUDINARY', False):
         url = cf.file.url
-        # Append fl_attachment to force download instead of display
-        if '?' in url:
-            url = url + '&fl_attachment=true'
-        else:
-            url = url + '?fl_attachment=true'
-        return HttpResponseRedirect(url)
+        # Force download by adding fl_attachment flag
+        separator = '&' if '?' in url else '?'
+        return HttpResponseRedirect(url + separator + 'fl_attachment=' + cf.name)
 
     # Local filesystem — serve via FileResponse
     try:

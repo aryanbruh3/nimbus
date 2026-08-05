@@ -1,20 +1,11 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.conf import settings
-
-
-def get_file_field():
-    """Return the right FileField based on whether Cloudinary is configured."""
-    if getattr(settings, 'USE_CLOUDINARY', False):
-        from cloudinary.models import CloudinaryField
-        return CloudinaryField('file', folder='nimbus/')
-    return models.FileField(upload_to='uploads/')
 
 
 class CloudFile(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cloud_files')
     name = models.CharField(max_length=255)
-    file = get_file_field()
+    file = models.FileField(upload_to='uploads/')
     size_bytes = models.BigIntegerField(default=0)
     file_type = models.CharField(max_length=50, default='other')
     uploaded_at = models.DateTimeField(auto_now_add=True)
