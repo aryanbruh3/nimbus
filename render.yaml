@@ -3,7 +3,7 @@ services:
     name: nimbus-cloud-storage
     runtime: node
     plan: free
-    buildCommand: npm install && npx drizzle-kit push && npm run build
+    buildCommand: npm install --include=dev && npm run db:push && npm run build
     startCommand: npm run start
     envVars:
       - key: DATABASE_URL
