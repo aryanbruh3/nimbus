@@ -1,0 +1,144 @@
+{% extends 'pages/base.html' %}
+{% load static nimbus_tags %}
+
+{% block title_extra %} — Dashboard{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+{% block breadcrumb %}Dashboard{% endblock %}
+
+{% block content %}
+<h2 class="mb-2xl" style="letter-spacing:-0.02em">Dashboard</h2>
+
+<!-- Stat Cards -->
+<div class="bento-grid mb-2xl">
+  <div class="stat-card">
+    <div class="stat-icon-wrap">
+      <i data-lucide="files" class="nav-icon"></i>
+    </div>
+    <div>
+      <div class="stat-value">{{ total_files }}</div>
+      <div class="stat-label">Total Files</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon-wrap">
+      <i data-lucide="star" class="nav-icon"></i>
+    </div>
+    <div>
+      <div class="stat-value">{{ starred_files }}</div>
+      <div class="stat-label">Starred</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon-wrap">
+      <i data-lucide="hard-drive" class="nav-icon"></i>
+    </div>
+    <div>
+      <div class="stat-value">{{ storage.used_display }}</div>
+      <div class="stat-label">Storage Used</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon-wrap">
+      <i data-lucide="cloud" class="nav-icon"></i>
+    </div>
+    <div>
+      <div class="stat-value">{{ storage.total_display }}</div>
+      <div class="stat-label">Total Capacity</div>
+    </div>
+  </div>
+</div>
+
+<!-- Storage Overview -->
+<div class="bento-grid mb-2xl">
+  <div class="storage-meter bento-span-2">
+    <div class="storage-meter-header">
+      <span class="storage-meter-title">Storage Overview</span>
+      <span class="storage-meter-value">{{ storage.percentage|floatformat:0 }}%</span>
+    </div>
+    <div class="storage-bar-track">
+      <div class="storage-bar-fill" style="width: {{ storage.percentage }}%"></div>
+    </div>
+    <div class="storage-breakdown">
+      {% for type, count in type_counts.items %}
+      <div class="storage-breakdown-item">
+        <div class="storage-breakdown-dot" style="background:var(--badge-{{ type }}-text, var(--c-muted))"></div>
+        <div>
+          <div class="storage-breakdown-label">{{ type|capfirst }}</div>
+          <div class="storage-breakdown-size">{{ count }} files</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Quick Upload -->
+  <div class="card bento-span-2">
+    <div class="card-header">
+      <span class="card-title">Quick Upload</span>
+    </div>
+    <div class="dropzone" id="dashboard-dropzone">
+      <form method="post" enctype="multipart/form-data" style="display:none">
+        {% csrf_token %}
+        <input type="file" name="file" id="file-upload-input">
+      </form>
+      <i data-lucide="upload-cloud" class="dropzone-icon"></i>
+      <div class="dropzone-title">Drag files here</div>
+      <div class="dropzone-subtitle">or <span class="dropzone-link">browse</span> to choose</div>
+    </div>
+    <div class="upload-progress-list"></div>
+  </div>
+</div>
+
+<!-- Recent Files -->
+<div class="card mb-xl">
+  <div class="card-header">
+    <span class="card-title">Recent Files</span>
+    <a href="{% url 'files' %}" class="text-accent" style="font-size:var(--fs-sm)">View all →</a>
+  </div>
+
+  {% if recent_files %}
+  <div class="files-list">
+    {% for f in recent_files %}
+    <div class="file-row" data-type="{{ f.type_badge }}" data-name="{{ f.name }}" data-id="{{ f.id }}" style="cursor:pointer">
+      <div class="file-row-icon icon-bg-{{ f.type_badge }}">
+        <i data-lucide="{{ f.type_badge|file_icon }}" class="nav-icon" style="width:18px;height:18px"></i>
+      </div>
+      <div class="file-row-name">{{ f.name }}</div>
+      <div class="badge badge-{{ f.type_badge }}">{{ f.type_badge|capfirst }}</div>
+      <div class="file-row-size">{{ f.size_display }}</div>
+      <div class="file-row-actions">
+        <a href="{% url 'file_download' f.id %}" class="file-action-btn" title="Download" download><i data-lucide="download" style="width:14px;height:14px"></i></a>
+        <button class="file-action-btn {% if f.is_starred %}starred{% endif %}" data-star><i data-lucide="star" style="width:14px;height:14px"></i></button>
+        <button class="file-action-btn danger" data-delete><i data-lucide="trash-2" style="width:14px;height:14px"></i></button>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <i data-lucide="inbox" class="empty-state-icon"></i>
+    <div class="empty-state-title">No files yet</div>
+    <div class="empty-state-desc">Upload your first file to get started with Nimbus cloud storage.</div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Custom template filter mapping for icons
+document.addEventListener('DOMContentLoaded', () => {
+  // Map file type to lucide icon name
+  const iconMap = {
+    'pdf': 'file-text', 'image': 'image', 'archive': 'archive',
+    'code': 'code-2', 'doc': 'file-text', 'video': 'film',
+    'audio': 'music', 'other': 'file'
+  };
+  // The Django template uses a custom filter, but since we render server-side
+  // the icon names are already embedded. This is just a fallback.
+});
+</script>
+{% endblock %}

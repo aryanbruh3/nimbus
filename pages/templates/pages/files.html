@@ -1,0 +1,180 @@
+{% extends 'pages/base.html' %}
+{% load static nimbus_tags %}
+
+{% block title_extra %} — All Files{% endblock %}
+{% block nav_files %}active{% endblock %}
+{% block breadcrumb %}All Files{% endblock %}
+
+{% block content %}
+<h2 class="mb-xl" style="letter-spacing:-0.02em">All Files</h2>
+
+<!-- Dropzone Upload -->
+<div class="card mb-2xl">
+  <div class="card-header">
+    <span class="card-title">Upload Files</span>
+    <span class="card-subtitle">Drag & drop or click to browse</span>
+  </div>
+  <form method="post" enctype="multipart/form-data" id="upload-form" style="display:none">
+    {% csrf_token %}
+    <input type="file" name="file" id="file-upload-input" multiple>
+  </form>
+  <div class="dropzone" id="main-dropzone">
+    <i data-lucide="upload-cloud" class="dropzone-icon"></i>
+    <div class="dropzone-title">Drag files here to upload</div>
+    <div class="dropzone-subtitle">or <span class="dropzone-link">browse your computer</span></div>
+  </div>
+  <div class="upload-progress-list"></div>
+</div>
+
+<!-- Toolbar -->
+<div class="files-toolbar">
+  <div class="files-toolbar-left">
+    <button class="filter-btn active-filter" data-type="all">
+      <i data-lucide="layers" style="width:14px;height:14px"></i> All
+    </button>
+    <button class="filter-btn" data-type="pdf">
+      <i data-lucide="file-text" style="width:14px;height:14px"></i> PDF
+    </button>
+    <button class="filter-btn" data-type="image">
+      <i data-lucide="image" style="width:14px;height:14px"></i> Image
+    </button>
+    <button class="filter-btn" data-type="archive">
+      <i data-lucide="archive" style="width:14px;height:14px"></i> Archive
+    </button>
+    <button class="filter-btn" data-type="code">
+      <i data-lucide="code-2" style="width:14px;height:14px"></i> Code
+    </button>
+    <button class="filter-btn" data-type="doc">
+      <i data-lucide="file-text" style="width:14px;height:14px"></i> Doc
+    </button>
+  </div>
+  <div class="files-toolbar-right">
+    {% if files %}
+    <!-- Select All checkbox -->
+    <label class="select-all-label">
+      <input type="checkbox" id="select-all-checkbox">
+      <span>Select All</span>
+    </label>
+    <!-- Bulk Delete (hidden until files selected) -->
+    <button class="btn btn-danger bulk-delete-btn" id="bulk-delete-btn" style="display:none">
+      <i data-lucide="trash-2" style="width:14px;height:14px"></i> Delete Selected (<span id="selected-count">0</span>)
+    </button>
+    <!-- Delete All -->
+    <button class="btn btn-ghost delete-all-btn" id="delete-all-btn">
+      <i data-lucide="trash-2" style="width:14px;height:14px"></i> Delete All
+    </button>
+    {% endif %}
+    <div class="view-toggle">
+      <button class="view-toggle-btn" data-view="grid">
+        <i data-lucide="layout-grid" style="width:16px;height:16px"></i>
+      </button>
+      <button class="view-toggle-btn" data-view="list">
+        <i data-lucide="list" style="width:16px;height:16px"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete All Confirmation Modal -->
+<div class="modal-overlay" id="delete-all-modal">
+  <div class="modal-box">
+    <div class="modal-icon-wrap">
+      <i data-lucide="alert-triangle" class="nav-icon" style="width:24px;height:24px"></i>
+    </div>
+    <div class="modal-title">Delete all files?</div>
+    <div class="modal-desc">This will permanently remove ALL your uploaded files and free up your entire storage quota. This action cannot be undone.</div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="modal-cancel">Cancel</button>
+      <button class="btn btn-danger" id="modal-confirm-delete">
+        <i data-lucide="trash-2" style="width:14px;height:14px"></i> Delete All Files
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Single Confirmation Modal -->
+<div class="modal-overlay" id="delete-single-modal">
+  <div class="modal-box">
+    <div class="modal-icon-wrap">
+      <i data-lucide="alert-triangle" class="nav-icon" style="width:24px;height:24px"></i>
+    </div>
+    <div class="modal-title">Delete this file?</div>
+    <div class="modal-desc" id="delete-single-name">This file will be permanently deleted. This action cannot be undone.</div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="delete-single-cancel">Cancel</button>
+      <button class="btn btn-danger" id="delete-single-confirm">
+        <i data-lucide="trash-2" style="width:14px;height:14px"></i> Delete
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Selected Confirmation Modal -->
+<div class="modal-overlay" id="delete-selected-modal">
+  <div class="modal-box">
+    <div class="modal-icon-wrap">
+      <i data-lucide="alert-triangle" class="nav-icon" style="width:24px;height:24px"></i>
+    </div>
+    <div class="modal-title">Delete selected files?</div>
+    <div class="modal-desc" id="delete-selected-desc">These files will be permanently deleted. This action cannot be undone.</div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="delete-selected-cancel">Cancel</button>
+      <button class="btn btn-danger" id="delete-selected-confirm">
+        <i data-lucide="trash-2" style="width:14px;height:14px"></i> Delete Selected
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Grid View -->
+<div class="files-grid">
+  {% for f in files %}
+  <div class="file-card" data-type="{{ f.type_badge }}" data-name="{{ f.name }}" data-id="{{ f.id }}" style="cursor:pointer">
+    <div class="file-card-actions">
+      <input type="checkbox" class="file-select-checkbox" data-id="{{ f.id }}">
+      <a href="{% url 'file_download' f.id %}" class="file-action-btn" title="Download" download><i data-lucide="download" style="width:14px;height:14px"></i></a>
+      <button class="file-action-btn {% if f.is_starred %}starred{% endif %}" data-star><i data-lucide="star" style="width:14px;height:14px"></i></button>
+      <button class="file-action-btn danger" data-delete><i data-lucide="trash-2" style="width:14px;height:14px"></i></button>
+    </div>
+    <div class="file-card-icon icon-bg-{{ f.type_badge }}">
+      <i data-lucide="{{ f.type_badge|file_icon }}" class="nav-icon" style="width:24px;height:24px"></i>
+    </div>
+    <div class="file-card-name">{{ f.name }}</div>
+    <div class="badge badge-{{ f.type_badge }}">{{ f.type_badge|capfirst }}</div>
+    <div class="file-card-meta">{{ f.size_display }}</div>
+  </div>
+  {% empty %}
+  <div class="empty-state bento-span-full">
+    <i data-lucide="cloud-upload" class="empty-state-icon"></i>
+    <div class="empty-state-title">No files yet</div>
+    <div class="empty-state-desc">Upload your first file using the dropzone above.</div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- List View -->
+<div class="files-list hidden">
+  {% for f in files %}
+  <div class="file-row" data-type="{{ f.type_badge }}" data-name="{{ f.name }}" data-id="{{ f.id }}" style="cursor:pointer">
+    <input type="checkbox" class="file-select-checkbox" data-id="{{ f.id }}">
+    <div class="file-row-icon icon-bg-{{ f.type_badge }}">
+      <i data-lucide="{{ f.type_badge|file_icon }}" class="nav-icon" style="width:18px;height:18px"></i>
+    </div>
+    <div class="file-row-name">{{ f.name }}</div>
+    <div class="badge badge-{{ f.type_badge }}">{{ f.type_badge|capfirst }}</div>
+    <div class="file-row-size">{{ f.size_display }}</div>
+    <div class="file-row-actions">
+      <a href="{% url 'file_download' f.id %}" class="file-action-btn" title="Download" download><i data-lucide="download" style="width:14px;height:14px"></i></a>
+      <button class="file-action-btn {% if f.is_starred %}starred{% endif %}" data-star><i data-lucide="star" style="width:14px;height:14px"></i></button>
+      <button class="file-action-btn danger" data-delete><i data-lucide="trash-2" style="width:14px;height:14px"></i></button>
+    </div>
+  </div>
+  {% empty %}
+  <div class="empty-state">
+    <i data-lucide="cloud-upload" class="empty-state-icon"></i>
+    <div class="empty-state-title">No files yet</div>
+    <div class="empty-state-desc">Upload your first file using the dropzone above.</div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
